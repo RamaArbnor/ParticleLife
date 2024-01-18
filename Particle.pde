@@ -1,116 +1,168 @@
-class Particle {
-    PVector position;
-    PVector velocity;
-    int type;
+class particle { // or a cell of a colony or an organelle of a cell
+  PVector position;
+  PVector velocity;
+  int type;
+  boolean center;
 
-    Particle (PVector pos, int type) {
-        this.position = new PVector(pos.x, pos.y);
-        this.velocity = new PVector(0, 0);
-        this.type = type;
-    }
+  // constructor
+  particle(PVector start, int t) {
+    position = new PVector(start.x, start.y);
+    velocity = new PVector(0, 0);
+    type = t;
+    center = false;
+  }
 
-
-
-    void applyInternalForces(Cell c){
-        PVector totalForce = new PVector(0, 0);
-        PVector acceleration = new PVector(0, 0);
-        PVector vector = new PVector(0, 0);
-        float dis;
-        for(Particle p : c.particles){
-            
-            if(p != this){
-                    vector.mult(0);
-                    vector = p.position.copy();
-                    vector.sub(position);
-                    if (vector.x > width * 0.5) {
-                    vector.x -= width;
-                    }
-                    if (vector.x < width * -0.5) {
-                    vector.x += width;
-                    }
-                    if (vector.y > height * 0.5) {
-                    vector.y -= height;
-                    }
-                    if (vector.y < height * -0.5) {
-                    vector.y += height;
-                    }
-                    dis = vector.mag();
-                    vector.normalize();
-                if (dis < c.internalMins[this.type][p.type]){
-                    PVector force = vector.copy();
-                    force.mult(abs(c.internalMins[this.type][p.type] * -3*K));
-                    force.mult(map(dis, 0, c.internalMins[type][p.type], 1, 0));
-                    totalForce.add(force);
-                }
-                if (dis < c.internalRadii[this.type][p.type]) {
-                    PVector force = vector.copy();
-                    force = force.copy().mult(abs(c.internalForces[this.type][p.type] * -3 * K));
-                    force = force.copy().mult(map(dis, 0, c.internalRadii[type][p.type], 1, 0));
-                    totalForce.add(force);
-                }
-            }
+  // applies forces based on this cell's particles
+  void applyInternalForces(cell c) {
+    PVector totalForce = new PVector(0, 0);
+    PVector acceleration = new PVector(0, 0);
+    PVector vector = new PVector(0, 0);
+    float dis;
+    for (particle p : c.swarm) {
+      if (p != this) {
+        vector.mult(0);
+        vector = p.position.copy();
+        vector.sub(position);
+        if (vector.x > width * 0.5) {
+          vector.x -= width;
         }
-        acceleration.add(totalForce);
-        this.velocity.add(acceleration);
-        this.velocity.mult(friction);
-        this.position.add(this.velocity);
-
-    }
-
-    void applyExternalForces(Cell c){
-        PVector totalForce = new PVector(0, 0);
-        PVector acceleration = new PVector(0, 0);
-        PVector vector = new PVector(0, 0);
-        
-        float dis;
-        for(Cell other : world){
-            if(other != c){
-                for(Particle p : other.particles){
-                    vector.mult(0);
-                    vector = p.position.copy();
-                    vector.sub(position);
-                    if (vector.x > width * 0.5) {
-                        vector.x -= width;
-                    }
-                    if (vector.x < width * -0.5) {
-                        vector.x += width;
-                    }
-                    if (vector.y > height * 0.5) {
-                        vector.y -= height;
-                    }
-                    if (vector.y < height * -0.5) {
-                        vector.y += height;
-                    }
-                    dis = vector.mag();
-                    vector.normalize();        
-                    if(p != this){
-                        if (dis < c.externalMins[this.type][p.type]){
-                             PVector force = vector.copy();
-                            force = force.copy().mult(abs(c.internalMins[this.type][p.type] * -3*K));
-                            force = force.copy().mult(map(dis, 0, c.internalMins[type][p.type], 1, 0));
-                            totalForce.add(force);
-                        }
-                        if (dis < c.externalRadii[this.type][p.type]) {
-                            PVector force = vector.copy();
-                            force = force.copy().mult(c.externalForces[type][p.type]*K);
-                            force = force.copy().mult(map(dis, 0, c.externalRadii[type][p.type], 1, 0));
-                            totalForce.add(force);
-                        }
-
-                    }
-                }                
-            }
+        if (vector.x < width * -0.5) {
+          vector.x += width;
         }
-        
-        acceleration.add(totalForce);
-        this.velocity.add(acceleration);
-        this.velocity.mult(friction);
-        this.position.add(this.velocity);
+        if (vector.y > height * 0.5) {
+          vector.y -= height;
+        }
+        if (vector.y < height * -0.5) {
+          vector.y += height;
+        }
+        dis = vector.mag();
+        vector.normalize();
+        if (dis < c.internalMins[type][p.type]) {
+          PVector force = vector.copy();
+          force.mult(abs(c.internalForces[type][p.type])*-3*K);
+          force.mult(map(dis, 0, c.internalMins[type][p.type], 1, 0));
+          totalForce.add(force);
+        }
+        if (dis < c.internalRadii[type][p.type]) {
+          PVector force = vector.copy();
+          force.mult(c.internalForces[type][p.type]*K);
+          force.mult(map(dis, 0, c.internalRadii[type][p.type], 1, 0));
+          totalForce.add(force);
+        }
+      }
     }
+    acceleration = totalForce.copy();
+    velocity.add(acceleration);
 
-    void draw(){
-        fill(this.type*colorStep, 100, 100);
-        circle(this.position.x, this.position.y, 10);
+    position.add(velocity);
+    position.x = (position.x + width)%width;
+    position.y = (position.y + height)%height;
+    velocity.mult(friction);
+  }
+  
+  // applies forces based on other cell's particles 
+  void applyExternalForces(cell c) {
+    PVector totalForce = new PVector(0, 0);
+    PVector acceleration = new PVector(0, 0);
+    PVector vector = new PVector(0, 0);
+    float dis;
+    for (cell other : swarm) { // for each other cell in the swarm
+      if (other != c) {  // don't apply external forces within this cell
+        for (particle p : other.swarm) { // for each particle in the other cell
+          vector.mult(0);
+          vector = p.position.copy();
+          vector.sub(position);
+          if (vector.x > width * 0.5) {
+            vector.x -= width;
+          }
+          if (vector.x < width * -0.5) {
+            vector.x += width;
+          }
+          if (vector.y > height * 0.5) {
+            vector.y -= height;
+          }
+          if (vector.y < height * -0.5) {
+            vector.y += height;
+          }
+          dis = vector.mag();
+          vector.normalize();
+          if (dis < c.externalMins[type][p.type]) {
+            PVector force = vector.copy();
+            force.mult(abs(c.externalForces[type][p.type])*-3*K);
+            force.mult(map(dis, 0, c.externalMins[type][p.type], 1, 0));
+            totalForce.add(force);
+          }
+          if (dis < c.externalRadii[type][p.type]) {
+            PVector force = vector.copy();
+            force.mult(c.externalForces[type][p.type]*K);
+            force.mult(map(dis, 0, c.externalRadii[type][p.type], 1, 0));
+            totalForce.add(force);
+          }
+        }
+      }
     }
+    acceleration = totalForce.copy();
+    velocity.add(acceleration);
+    position.add(velocity);
+    position.x = (position.x + width)%width;
+    position.y = (position.y + height)%height;
+    velocity.mult(friction);
+  }
 
+  // applies forces based on nearby food particles
+  void applyFoodForces(cell c) {
+    PVector totalForce = new PVector(0, 0);
+    PVector acceleration = new PVector(0, 0);
+    PVector vector = new PVector(0, 0);
+    float dis;
+    for (particle p : food) {  // for all food particles
+      vector.mult(0);
+      vector = p.position.copy();
+      vector.sub(position);
+      if (vector.x > width * 0.5) {
+        vector.x -= width;
+      }
+      if (vector.x < width * -0.5) {
+        vector.x += width;
+      }
+      if (vector.y > height * 0.5) {
+        vector.y -= height;
+      }
+      if (vector.y < height * -0.5) {
+        vector.y += height;
+      }
+      dis = vector.mag();
+      vector.normalize();
+      // no repulsive force for food
+      if (dis < c.externalRadii[type][p.type]) {
+        PVector force = vector.copy();
+        force.mult(c.externalForces[type][p.type]*K);
+        force.mult(map(dis, 0, c.externalRadii[type][p.type], 1, 0));
+        totalForce.add(force);
+      }
+    }
+    acceleration = totalForce.copy();
+    velocity.add(acceleration);
+    position.add(velocity);
+    position.x = (position.x + width)%width;
+    position.y = (position.y + height)%height;
+    velocity.mult(friction);
+  }
+
+  void applyForce(PVector force){
+    this.velocity.add(force);
+    
+  }
+
+  // display the particles
+  void display() {
+    fill(type*colorStep, 100, 100);
+    if(!this.center){
+      circle(position.x, position.y, 8);
+    }
+    else{
+      fill(120, 100, 100);
+      triangle(position.x, position.y, position.x+5, position.y+10, position.x-5, position.y+10);
+    }
+  }
 }
