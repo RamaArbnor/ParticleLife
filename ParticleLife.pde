@@ -20,7 +20,7 @@ boolean drawLines = false; // whether or not to draw lines connecting a cell's p
 void setup() {
   size(1800, 1000);
   // fullScreen();
-  // colorMode(HSB, 360, 100, 100);
+  colorMode(HSB, 360, 100, 100);
   noStroke();
   swarm = new ArrayList<cell>();
   for (int i = 0; i < minPopulation; i++) {
@@ -70,6 +70,7 @@ void draw() {
   text("Press r to reproduce a random cell", 10, 160);
   text("Press p to print dna of a random cell", 10, 180);
   text("Press s to save a screenshot", 10, 200);
+  text("Press u to print adam particle", 10, 220);
 
 
 
@@ -129,7 +130,7 @@ void eat() {
           particle f = food.get(i);
           vector.mult(0);
           vector = f.position.copy();
-          vector.sub(p.position); 
+          vector.sub(p.drawPos); 
           if (vector.x > width * 0.5) { vector.x -= width; }
           if (vector.x < width * -0.5) { vector.x += width; }
           if (vector.y > height * 0.5) { vector.y -= height; }
@@ -182,6 +183,13 @@ void keyPressed(){
   //save a screenshot
   if(key == 's'){
     saveFrame("screenshot.png");
+  }
+
+  //print particle stats
+  if(key == 'u'){
+    cell c;
+    c = swarm.get(0);
+    c.swarm.get(0).printStats();
   }
 
 

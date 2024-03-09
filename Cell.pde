@@ -163,7 +163,7 @@ class cell{  // or colony of cells
 
     }
 
-    cost += map(sumDist,0,1000,0,0.1); // map the distance from the center to a cost
+    cost += map(sumDist,0,500,0,0.1); // map the distance from the center to a cost
 
 
     energy -= cost/2; // cells lose one energy/timestep - should be a variable. Or dependent on forces generated
@@ -177,7 +177,7 @@ class cell{  // or colony of cells
      for(int  i = 0; i < numParticles-1; i++){
        p1 = swarm.get(i);
        p2 = swarm.get(i+1);
-       line(p1.position.x,p1.position.y,p2.position.x,p2.position.y);
+       line(p1.drawPos.x,p1.drawPos.y,p2.drawPos.x,p2.drawPos.y);
      }
     }
     noStroke();

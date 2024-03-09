@@ -1,5 +1,6 @@
 class particle { // or a cell of a colony or an organelle of a cell
   PVector position;
+  PVector drawPos;
   PVector velocity;
   int type;
   boolean center;
@@ -7,6 +8,7 @@ class particle { // or a cell of a colony or an organelle of a cell
   // constructor
   particle(PVector start, int t) {
     position = new PVector(start.x, start.y);
+    drawPos = new PVector(start.x, start.y);
     velocity = new PVector(0, 0);
     type = t;
     center = false;
@@ -23,18 +25,18 @@ class particle { // or a cell of a colony or an organelle of a cell
         vector.mult(0);
         vector = p.position.copy();
         vector.sub(position);
-        if (vector.x > width * 0.5) {
-          vector.x -= width;
-        }
-        if (vector.x < width * -0.5) {
-          vector.x += width;
-        }
-        if (vector.y > height * 0.5) {
-          vector.y -= height;
-        }
-        if (vector.y < height * -0.5) {
-          vector.y += height;
-        }
+        // if (vector.x > width * 0.5) {
+        //   vector.x -= width;
+        // }
+        // if (vector.x < width * -0.5) {
+        //   vector.x += width;
+        // }
+        // if (vector.y > height * 0.5) {
+        //   vector.y -= height;
+        // }
+        // if (vector.y < height * -0.5) {
+        //   vector.y += height;
+        // }
         dis = vector.mag();
         vector.normalize();
         if (dis < c.internalMins[type][p.type]) {
@@ -55,9 +57,11 @@ class particle { // or a cell of a colony or an organelle of a cell
     velocity.add(acceleration);
 
     position.add(velocity);
-    position.x = (position.x + width)%width;
-    position.y = (position.y + height)%height;
+    // position.x = (position.x + width)%width;
+    // position.y = (position.y + height)%height;
     velocity.mult(friction);
+    calcualteDrawPos();
+
   }
   
   // applies forces based on other cell's particles 
@@ -72,18 +76,18 @@ class particle { // or a cell of a colony or an organelle of a cell
           vector.mult(0);
           vector = p.position.copy();
           vector.sub(position);
-          if (vector.x > width * 0.5) {
-            vector.x -= width;
-          }
-          if (vector.x < width * -0.5) {
-            vector.x += width;
-          }
-          if (vector.y > height * 0.5) {
-            vector.y -= height;
-          }
-          if (vector.y < height * -0.5) {
-            vector.y += height;
-          }
+          // if (vector.x > width * 0.5) {
+          //   vector.x -= width;
+          // }
+          // if (vector.x < width * -0.5) {
+          //   vector.x += width;
+          // }
+          // if (vector.y > height * 0.5) {
+          //   vector.y -= height;
+          // }
+          // if (vector.y < height * -0.5) {
+          //   vector.y += height;
+          // }
           dis = vector.mag();
           vector.normalize();
           if (dis < c.externalMins[type][p.type]) {
@@ -104,9 +108,11 @@ class particle { // or a cell of a colony or an organelle of a cell
     acceleration = totalForce.copy();
     velocity.add(acceleration);
     position.add(velocity);
-    position.x = (position.x + width)%width;
-    position.y = (position.y + height)%height;
+    // position.x = (position.x + width)%width;
+    // position.y = (position.y + height)%height;
     velocity.mult(friction);
+    calcualteDrawPos();
+
   }
 
   // applies forces based on nearby food particles
@@ -119,18 +125,18 @@ class particle { // or a cell of a colony or an organelle of a cell
       vector.mult(0);
       vector = p.position.copy();
       vector.sub(position);
-      if (vector.x > width * 0.5) {
-        vector.x -= width;
-      }
-      if (vector.x < width * -0.5) {
-        vector.x += width;
-      }
-      if (vector.y > height * 0.5) {
-        vector.y -= height;
-      }
-      if (vector.y < height * -0.5) {
-        vector.y += height;
-      }
+      // if (vector.x > width * 0.5) {
+      //   vector.x -= width;
+      // }
+      // if (vector.x < width * -0.5) {
+      //   vector.x += width;
+      // }
+      // if (vector.y > height * 0.5) {
+      //   vector.y -= height;
+      // }
+      // if (vector.y < height * -0.5) {
+      //   vector.y += height;
+      // }
       dis = vector.mag();
       vector.normalize();
       // no repulsive force for food
@@ -144,9 +150,37 @@ class particle { // or a cell of a colony or an organelle of a cell
     acceleration = totalForce.copy();
     velocity.add(acceleration);
     position.add(velocity);
-    position.x = (position.x + width)%width;
-    position.y = (position.y + height)%height;
+    // position.x = (position.x + width)%width;
+    // position.y = (position.y + height)%height;
     velocity.mult(friction);
+    calcualteDrawPos();
+  }
+
+  void calcualteDrawPos(){
+    float x = this.position.x;
+    float y = this.position.y;
+    float tempX;
+    float tempY;
+    
+    if (x < 0) {
+      tempX = width - (abs(x) % width);
+      this.drawPos.x = tempX;
+
+    } 
+    else  {
+      tempX = x % width;
+      this.drawPos.x = tempX;
+    }
+
+    if (y < 0) {
+      tempY = height - (abs(y) % height);
+      this.drawPos.y = tempY;
+    } 
+    else {
+      tempY = y % height;
+      this.drawPos.y = tempY;
+    }
+
   }
 
   void applyForce(PVector force){
@@ -154,15 +188,26 @@ class particle { // or a cell of a colony or an organelle of a cell
     
   }
 
+  void printStats(){
+    println("Position: " + this.position);
+    println("Draw Position: " + this.drawPos);
+    println("Velocity: " + this.velocity);
+    println("Type: " + this.type);
+    println("Center: " + this.center);
+    println(" ");
+    println("====================================");
+    println(" ");
+  }
+
   // display the particles
   void display() {
     fill(type*colorStep, 100, 100);
     if(!this.center){
-      circle(position.x, position.y, 8);
+      circle(this.drawPos.x, this.drawPos.y, 8);
     }
     else{
       fill(120, 100, 100);
-      triangle(position.x, position.y, position.x+5, position.y+10, position.x-5, position.y+10);
+      triangle(this.drawPos.x, this.drawPos.y, this.drawPos.x+5, this.drawPos.y+10, this.drawPos.x-5, this.drawPos.y+10);
     }
   }
 }
