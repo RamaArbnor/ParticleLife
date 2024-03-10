@@ -226,4 +226,13 @@ void keyPressed(){
     showSelected = !showSelected;
   }
 
+  if (key == 't'){
+    if (looping){
+      noLoop();
+    }else {
+      loop();
+    }         
+  }
+
+
 }
