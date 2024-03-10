@@ -12,11 +12,13 @@ ArrayList<cell> cells;
 ArrayList<particle> food;
 boolean display = true; // whether or not to display, d toggles, used to evolve faster
 boolean drawLines = false; // whether or not to draw lines connecting a cell's particles, l to toggle
+int selectedCell = 0;
+boolean showSelected = true;
 
 void setup() {
   size(1800, 1000);
   // fullScreen();
-  colorMode(HSB, 360, 100, 100);
+  // colorMode(HSB, 360, 100, 100);
   noStroke();
   cells = new ArrayList<cell>();
   for (int i = 0; i < minPopulation; i++) {
@@ -27,6 +29,9 @@ void setup() {
     food.add(new particle(new PVector(random(width), random(height)), 0));
   }
   noStroke();
+
+  cells.get(selectedCell).selected = true;
+
 }
 
 void draw() {
@@ -67,6 +72,13 @@ void draw() {
   text("Press p to print dna of a random cell", 10, 180);
   text("Press s to save a screenshot", 10, 200);
   text("Press u to print adam particle", 10, 220);
+  text("Press f to toggle selection", 10, 240);
+
+  // text on the right side
+  text("Selected Cell number " + selectedCell, width-200, 20);
+  text("Number of Particles :" + cells.get(selectedCell).numParticles , width-200, 40);
+  text("Energy :" + cells.get(selectedCell).energy, width-200, 60);
+  text("Living Cost :" + cells.get(selectedCell).livingCost, width-200, 80);
 
 
 
@@ -188,5 +200,30 @@ void keyPressed(){
     c.swarm.get(0).printStats();
   }
 
+  if(key == 'k'){
+    selectedCell++;
+    if(selectedCell >= cells.size()){
+      selectedCell = 0;
+    }
+    for(int i = 0; i < cells.size(); i++){
+      cells.get(i).selected = false;
+    }
+    cells.get(selectedCell).selected = true;
+  }
+
+  if(key == 'j'){
+    selectedCell--;
+    if(selectedCell < 0){
+      selectedCell = cells.size()-1;
+    }
+    for(int i = 0; i < cells.size(); i++){
+      cells.get(i).selected = false;
+    }
+    cells.get(selectedCell).selected = true;
+  }
+
+  if(key == 'f'){
+    showSelected = !showSelected;
+  }
 
 }

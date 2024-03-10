@@ -13,6 +13,9 @@ class cell{  // or colony of cells
   PVector center = new PVector(0,0); // center of the cell
   particle centerParticle; 
   
+  boolean selected = false;
+  float livingCost;
+
   cell(float x, float y){
     internalForces = new float[numTypes][numTypes];
     externalForces = new float[numTypes][numTypes];
@@ -154,20 +157,21 @@ class cell{  // or colony of cells
     
     float cost = 1.0; 
     float sumDist = 0.0;
-    for(particle p: swarm){ // for each particle in this cell
+    for(particle p: swarm){ 
       p.applyInternalForces(this);
       p.applyExternalForces(this);
       p.applyFoodForces(this);
-
       sumDist += p.position.dist(center);
-
     }
+    cost += map(sumDist,0,500,0,0.1); 
+    energy -= cost/2; 
+    livingCost = cost;
 
-    cost += map(sumDist,0,500,0,0.1); // map the distance from the center to a cost
-
-
-    energy -= cost/2; // cells lose one energy/timestep - should be a variable. Or dependent on forces generated
-}
+    for(particle p: swarm){
+      p.selected = selected;
+    }
+    
+  }
   
   void display(){
     // Code to draw lines between the particles in a cell

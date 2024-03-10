@@ -4,6 +4,7 @@ class particle { // or a cell of a colony or an organelle of a cell
   PVector velocity;
   int type;
   boolean center;
+  boolean selected = false;
 
   // constructor
   particle(PVector start, int t) {
@@ -208,6 +209,11 @@ class particle { // or a cell of a colony or an organelle of a cell
     else{
       fill(120, 100, 100);
       triangle(this.drawPos.x, this.drawPos.y, this.drawPos.x+5, this.drawPos.y+10, this.drawPos.x-5, this.drawPos.y+10);
+    }
+    if(this.selected && showSelected){
+      noFill();
+      stroke(0, 255, 0);
+      circle(this.drawPos.x, this.drawPos.y, 12);
     }
   }
 }
