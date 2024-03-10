@@ -1,7 +1,3 @@
-// An evolutionary version of Particle Life.
-// By Terence Soule of Programming Chaos https://www.youtube.com/channel/UC2rO9hEjJkjqzktvtj0ggNQ
-// Sets of particles (cells) share forces and share food.
-// They can die of starvation or collect enough food to reproduce/
 int numTypes = 6;  // 0 is food, plus 5 more, type 1 'eats' food the others just generate forces
 int colorStep = 360/numTypes;
 float friction = 0.85;
@@ -12,7 +8,7 @@ int foodEnergy = 100; // energy from food
 int reproductionEnergy = 1000; 
 int startingEnergy = 400;
 float K = 0.1;
-ArrayList<cell> swarm;
+ArrayList<cell> cells;
 ArrayList<particle> food;
 boolean display = true; // whether or not to display, d toggles, used to evolve faster
 boolean drawLines = false; // whether or not to draw lines connecting a cell's particles, l to toggle
@@ -22,9 +18,9 @@ void setup() {
   // fullScreen();
   colorMode(HSB, 360, 100, 100);
   noStroke();
-  swarm = new ArrayList<cell>();
+  cells = new ArrayList<cell>();
   for (int i = 0; i < minPopulation; i++) {
-    swarm.add(new cell(random(width), random(height)));
+    cells.add(new cell(random(width), random(height)));
   }
   food = new ArrayList<particle>();
   for (int i = 0; i < numFood; i++) {
@@ -35,17 +31,17 @@ void setup() {
 
 void draw() {
   background(0);
-  for (cell c : swarm) { // update and display each cell
+  for (cell c : cells) { // update and display each cell
     c.update();
     if(display){
       c.display();
     }
   }
-  for (int i = swarm.size()-1; i >= 0; i--) { // remove dead (energyless cells)
-    cell c = swarm.get(i);
+  for (int i = cells.size()-1; i >= 0; i--) { // remove dead (energyless cells)
+    cell c = cells.get(i);
     if (c.energy <= 0) {
       //convertToFood(c);
-      swarm.remove(i);  // could convert to food instead
+      cells.remove(i);  // could convert to food instead
     }
   }
   eat();  // cells collect nearby food
@@ -60,7 +56,7 @@ void draw() {
 
   // statistics top left
   fill(255);
-  text("Population: " + swarm.size(), 10, 20);
+  text("Population: " + cells.size(), 10, 20);
   text("Food: " + food.size(), 10, 40);
   text("Frame Rate: " + floor(frameRate), 10, 60);
   text("Display: " + display, 10, 80);
@@ -90,15 +86,15 @@ void convertToFood(cell c){
 
 void reproduce(){
   cell c;
-  for(int i = swarm.size()-1; i>=0 ;i--){
-    c = swarm.get(i);
+  for(int i = cells.size()-1; i>=0 ;i--){
+    c = cells.get(i);
     particle center = c.swarm.get(0); // center particle of cell
     if(c.energy > reproductionEnergy){ // if a cell has enough energy 
       cell temp = new cell(center.position.x, center.position.y);  // make a new cell at a random location
       temp.copyCell(c); // copy the parent cell's 'DNA'
       c.energy -= startingEnergy;  // parent cell loses energy (daughter cell recieves it) 
       temp.mutateCell(); // mutate the daughter cell
-      swarm.add(temp);
+      cells.add(temp);
       c.applyForce(new PVector(-1, 0)); // give the parent cell a push
       temp.applyForce(new PVector(0, -1)); // give the daughter cell a push
       println("reproduced");
@@ -110,20 +106,20 @@ void reproduce(){
 // randomly selected existing cells.
 // Note: if the population all dies simultanious the program will crash - extinction!
 void replace(){
-  if(swarm.size() < minPopulation){  
-    int parent = int(random(swarm.size()));
+  if(cells.size() < minPopulation){  
+    int parent = int(random(cells.size()));
     cell temp = new cell(random(width), random(height));
-    cell parentCell = swarm.get(parent);
+    cell parentCell = cells.get(parent);
     temp.copyCell(parentCell);
     temp.mutateCell();
-    swarm.add(temp);
+    cells.add(temp);
   }
 }
 
 void eat() {
   float dis;
   PVector vector = new PVector(0, 0);
-  for (cell c : swarm) {  // for every cell
+  for (cell c : cells) {  // for every cell
     for (particle p : c.swarm) {  // for every particle in every cell
       if (p.type == 1) { // 1 is the eating type of paricle
         for (int i = food.size()-1; i >= 0; i--) {  // for every food particle - yes this gets slow
@@ -158,14 +154,14 @@ void keyPressed(){
   if(key == 'r'){
   cell c;
   
-    c = swarm.get((int) random(swarm.size()));
+    c = cells.get((int) random(cells.size()));
     particle center = c.swarm.get((int) random(c.swarm.size())); // center particle of cell
     if(c.energy > 0){ // if a cell has enough energy 
       cell temp = new cell(center.position.x, center.position.y);  // make a new cell at a random location
       temp.copyCell(c); // copy the parent cell's 'DNA'
       c.energy -= startingEnergy;  // parent cell loses energy (daughter cell recieves it) 
       temp.mutateCell(); // mutate the daughter cell
-      swarm.add(temp);
+      cells.add(temp);
       c.applyForce(new PVector(-0.1, 0)); // give the parent cell a push
       temp.applyForce(new PVector(0, -0.1)); // give the daughter cell a push
       println("reproduced");
@@ -176,7 +172,7 @@ void keyPressed(){
   //print dna of a random cell
   if(key == 'p'){
     cell c;
-    c = swarm.get(0);
+    c = cells.get(0);
     c.printDNA();
   }
 
@@ -188,7 +184,7 @@ void keyPressed(){
   //print particle stats
   if(key == 'u'){
     cell c;
-    c = swarm.get(0);
+    c = cells.get(0);
     c.swarm.get(0).printStats();
   }
 

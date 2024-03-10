@@ -70,7 +70,7 @@ class particle { // or a cell of a colony or an organelle of a cell
     PVector acceleration = new PVector(0, 0);
     PVector vector = new PVector(0, 0);
     float dis;
-    for (cell other : swarm) { // for each other cell in the swarm
+    for (cell other : cells) { // for each other cell in the swarm
       if (other != c) {  // don't apply external forces within this cell
         for (particle p : other.swarm) { // for each particle in the other cell
           vector.mult(0);
