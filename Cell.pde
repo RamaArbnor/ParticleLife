@@ -163,7 +163,7 @@ class cell{  // or colony of cells
       p.applyFoodForces(this);
       sumDist += p.position.dist(center);
     }
-    cost += map(sumDist,0,500,0,0.1); 
+    cost += map(sumDist,0,1500,0,0.1); 
     energy -= cost/2; 
     livingCost = cost;
 
