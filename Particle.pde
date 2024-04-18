@@ -6,6 +6,9 @@ class particle { // or a cell of a colony or an organelle of a cell
   boolean center;
   boolean selected = false;
 
+  // Box2D
+  Body body;
+
   // constructor
   particle(PVector start, int t) {
     position = new PVector(start.x, start.y);
@@ -13,149 +16,104 @@ class particle { // or a cell of a colony or an organelle of a cell
     velocity = new PVector(0, 0);
     type = t;
     center = false;
+
+    BodyDef bd = new BodyDef();
+    bd.type = BodyType.DYNAMIC;
+    bd.position.set(box2d.coordPixelsToWorld(position.x, position.y));
+    body = box2d.createBody(bd);
+
+    CircleShape cs = new CircleShape();
+    cs.m_radius = box2d.scalarPixelsToWorld(4);
+    
+    FixtureDef fd = new FixtureDef();
+    fd.shape = cs;
+    fd.density = 1;
+    fd.friction = friction;
+    fd.restitution = 0.5;
+
+    body.createFixture(fd);
+    body.setUserData(this);
+
+
   }
+
+  // void applyForce(Vec2 force) {
+  //   body.applyForce(force, body.getWorldCenter());
+  // }
 
   // applies forces based on this cell's particles
   void applyInternalForces(cell c) {
-    PVector totalForce = new PVector(0, 0);
-    PVector acceleration = new PVector(0, 0);
-    PVector vector = new PVector(0, 0);
-    float dis;
-    for (particle p : c.swarm) {
-      if (p != this) {
-        vector.mult(0);
-        vector = p.position.copy();
-        vector.sub(position);
-        // if (vector.x > width * 0.5) {
-        //   vector.x -= width;
-        // }
-        // if (vector.x < width * -0.5) {
-        //   vector.x += width;
-        // }
-        // if (vector.y > height * 0.5) {
-        //   vector.y -= height;
-        // }
-        // if (vector.y < height * -0.5) {
-        //   vector.y += height;
-        // }
-        dis = vector.mag();
-        vector.normalize();
-        if (dis < c.internalMins[type][p.type]) {
-          PVector force = vector.copy();
-          force.mult(abs(c.internalForces[type][p.type])*-3*K);
-          force.mult(map(dis, 0, c.internalMins[type][p.type], 1, 0));
-          totalForce.add(force);
-        }
-        if (dis < c.internalRadii[type][p.type]) {
-          PVector force = vector.copy();
-          force.mult(c.internalForces[type][p.type]*K);
-          force.mult(map(dis, 0, c.internalRadii[type][p.type], 1, 0));
-          totalForce.add(force);
-        }
+      for (particle p : c.swarm) {
+          if (p != this) {
+              Vec2 thisPos = body.getPosition();
+              Vec2 pPos = p.body.getPosition();
+              Vec2 direction = pPos.sub(thisPos);
+              float distance = direction.length();
+              direction.normalize();
+
+              // Calculate force magnitude based on particle properties, distance, and cell properties
+              float forceMagnitude = 0;
+
+              if (distance < c.internalMins[type][p.type]) {
+                  forceMagnitude = abs(c.internalForces[type][p.type]) * -3 * K * (1 - distance / c.internalMins[type][p.type]);
+              } else if (distance < c.internalRadii[type][p.type]) {
+                  forceMagnitude = c.internalForces[type][p.type] * K * (1 - distance / c.internalRadii[type][p.type]);
+              }
+
+              // Apply forces to the Box2D bodies
+              body.applyForceToCenter(direction.mul(forceMagnitude));
+              // p.body.applyForceToCenter(direction.mul(-forceMagnitude)); // Apply opposite force to the other particle
+          }
       }
-    }
-    acceleration = totalForce.copy();
-    velocity.add(acceleration);
-
-    position.add(velocity);
-    // position.x = (position.x + width)%width;
-    // position.y = (position.y + height)%height;
-    velocity.mult(friction);
-    calcualteDrawPos();
-
   }
   
   // applies forces based on other cell's particles 
   void applyExternalForces(cell c) {
-    PVector totalForce = new PVector(0, 0);
-    PVector acceleration = new PVector(0, 0);
-    PVector vector = new PVector(0, 0);
-    float dis;
-    for (cell other : cells) { // for each other cell in the swarm
-      if (other != c) {  // don't apply external forces within this cell
-        for (particle p : other.swarm) { // for each particle in the other cell
-          vector.mult(0);
-          vector = p.position.copy();
-          vector.sub(position);
-          // if (vector.x > width * 0.5) {
-          //   vector.x -= width;
-          // }
-          // if (vector.x < width * -0.5) {
-          //   vector.x += width;
-          // }
-          // if (vector.y > height * 0.5) {
-          //   vector.y -= height;
-          // }
-          // if (vector.y < height * -0.5) {
-          //   vector.y += height;
-          // }
-          dis = vector.mag();
-          vector.normalize();
-          if (dis < c.externalMins[type][p.type]) {
-            PVector force = vector.copy();
-            force.mult(abs(c.externalForces[type][p.type])*-3*K);
-            force.mult(map(dis, 0, c.externalMins[type][p.type], 1, 0));
-            totalForce.add(force);
-          }
-          if (dis < c.externalRadii[type][p.type]) {
-            PVector force = vector.copy();
-            force.mult(c.externalForces[type][p.type]*K);
-            force.mult(map(dis, 0, c.externalRadii[type][p.type], 1, 0));
-            totalForce.add(force);
-          }
-        }
-      }
-    }
-    acceleration = totalForce.copy();
-    velocity.add(acceleration);
-    position.add(velocity);
-    // position.x = (position.x + width)%width;
-    // position.y = (position.y + height)%height;
-    velocity.mult(friction);
-    calcualteDrawPos();
+      for (cell other : cells) {
+          if (other != c) {
+              for (particle p : other.swarm) {
+                  Vec2 thisPos = body.getPosition();
+                  Vec2 pPos = p.body.getPosition();
+                  Vec2 direction = pPos.sub(thisPos);
+                  float distance = direction.length();
+                  direction.normalize();
 
+                  // Calculate force magnitude based on particle properties, distance, and cell properties
+                  float forceMagnitude = 0;
+
+                  if (distance < c.externalMins[type][p.type]) {
+                      forceMagnitude = abs(c.externalForces[type][p.type]) * -3 * K * (1 - distance / c.externalMins[type][p.type]);
+                  } else if (distance < c.externalRadii[type][p.type]) {
+                      forceMagnitude = c.externalForces[type][p.type] * K * (1 - distance / c.externalRadii[type][p.type]);
+                  }
+
+                  // Apply forces to the Box2D bodies
+                  body.applyForceToCenter(direction.mul(forceMagnitude));
+              }
+          }
+      }
   }
 
   // applies forces based on nearby food particles
-  void applyFoodForces(cell c) {
-    PVector totalForce = new PVector(0, 0);
-    PVector acceleration = new PVector(0, 0);
-    PVector vector = new PVector(0, 0);
-    float dis;
-    for (particle p : food) {  // for all food particles
-      vector.mult(0);
-      vector = p.position.copy();
-      vector.sub(position);
-      // if (vector.x > width * 0.5) {
-      //   vector.x -= width;
-      // }
-      // if (vector.x < width * -0.5) {
-      //   vector.x += width;
-      // }
-      // if (vector.y > height * 0.5) {
-      //   vector.y -= height;
-      // }
-      // if (vector.y < height * -0.5) {
-      //   vector.y += height;
-      // }
-      dis = vector.mag();
-      vector.normalize();
-      // no repulsive force for food
-      if (dis < c.externalRadii[type][p.type]) {
-        PVector force = vector.copy();
-        force.mult(c.externalForces[type][p.type]*K);
-        force.mult(map(dis, 0, c.externalRadii[type][p.type], 1, 0));
-        totalForce.add(force);
-      }
+void applyFoodForces(cell c) {
+    for (particle p : food) {
+        Vec2 thisPos = body.getPosition();
+        Vec2 pPos = p.body.getPosition();
+        Vec2 direction = pPos.sub(thisPos);
+        float distance = direction.length();
+        direction.normalize();
+
+        // Calculate force magnitude based on particle properties, distance, and cell properties
+        float forceMagnitude = 0;
+
+        if (distance < c.externalRadii[type][p.type]) {
+            forceMagnitude = c.externalForces[type][p.type] * K * (1 - distance / c.externalRadii[type][p.type]);
+        }
+
+        // Apply forces to the Box2D body
+        body.applyForceToCenter(direction.mul(forceMagnitude));
     }
-    acceleration = totalForce.copy();
-    velocity.add(acceleration);
-    position.add(velocity);
-    // position.x = (position.x + width)%width;
-    // position.y = (position.y + height)%height;
-    velocity.mult(friction);
-    calcualteDrawPos();
-  }
+}
 
   void calcualteDrawPos(){
     float x = this.position.x;
@@ -201,19 +159,25 @@ class particle { // or a cell of a colony or an organelle of a cell
   }
 
   // display the particles
-  void display() {
-    fill(type*colorStep, 100, 100);
-    if(!this.center){
-      circle(this.drawPos.x, this.drawPos.y, 8);
+void display() {
+    Vec2 pos = body.getPosition(); // Get the position of the Box2D body
+    fill(type * colorStep, 100, 100);
+    
+    float px = box2d.scalarWorldToPixels(pos.x); // Convert X coordinate from world to pixels
+    float py = box2d.scalarWorldToPixels(pos.y); // Convert Y coordinate from world to pixels
+    
+    if (!center) {
+        circle(px, py, 8); // Draw the particle
+    } else {
+        fill(120, 100, 100);
+        triangle(px, py, px + 5, py + 10, px - 5, py + 10); // Draw the particle with center flag
     }
-    else{
-      fill(120, 100, 100);
-      triangle(this.drawPos.x, this.drawPos.y, this.drawPos.x+5, this.drawPos.y+10, this.drawPos.x-5, this.drawPos.y+10);
+    
+    if (selected && showSelected) {
+        noFill();
+        stroke(0, 255, 0);
+        circle(px, py, 12); // Draw the selection circle
     }
-    if(this.selected && showSelected){
-      noFill();
-      stroke(0, 255, 0);
-      circle(this.drawPos.x, this.drawPos.y, 12);
-    }
-  }
+}
+
 }

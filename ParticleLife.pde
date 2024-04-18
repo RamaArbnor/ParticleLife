@@ -1,9 +1,17 @@
+import shiffman.box2d.*;
+import org.jbox2d.collision.shapes.*;
+import org.jbox2d.common.*;
+import org.jbox2d.dynamics.*;
+
+Box2DProcessing box2d;
+
+
 int numTypes = 6;  // 0 is food, plus 5 more, type 1 'eats' food the others just generate forces
 int colorStep = 360/numTypes;
 float friction = 0.85;
 int minPopulation = 15;
 int numFood = 100; // starting amount of food
-int foodRange = 5; // distance to collect food
+int foodRange = 1; // distance to collect food
 int foodEnergy = 100; // energy from food
 int reproductionEnergy = 1000; 
 int startingEnergy = 400;
@@ -18,7 +26,11 @@ boolean showSelected = true;
 void setup() {
   size(1800, 1000);
   // fullScreen();
-  // colorMode(HSB, 360, 100, 100);
+  colorMode(HSB, 360, 100, 100);
+  box2d = new Box2DProcessing(this);
+  box2d.createWorld();
+  box2d.setGravity(0, 0);
+
   noStroke();
   cells = new ArrayList<cell>();
   for (int i = 0; i < minPopulation; i++) {
@@ -35,7 +47,9 @@ void setup() {
 }
 
 void draw() {
-  background(0);
+  background(21);
+  box2d.step();
+
   for (cell c : cells) { // update and display each cell
     c.update();
     if(display){
@@ -129,29 +143,23 @@ void replace(){
 }
 
 void eat() {
-  float dis;
-  PVector vector = new PVector(0, 0);
-  for (cell c : cells) {  // for every cell
-    for (particle p : c.swarm) {  // for every particle in every cell
-      if (p.type == 1) { // 1 is the eating type of paricle
-        for (int i = food.size()-1; i >= 0; i--) {  // for every food particle - yes this gets slow
-          particle f = food.get(i);
-          vector.mult(0);
-          vector = f.position.copy();
-          vector.sub(p.drawPos); 
-          if (vector.x > width * 0.5) { vector.x -= width; }
-          if (vector.x < width * -0.5) { vector.x += width; }
-          if (vector.y > height * 0.5) { vector.y -= height; }
-          if (vector.y < height * -0.5) { vector.y += height; }
-          dis = vector.mag();
-          if(dis < foodRange){
-            c.energy += foodEnergy; // gain 100 energy for eating food 
-            food.remove(i);
-          }
+    Vec2 vector = new Vec2(0, 0);
+    for (cell c : cells) {
+        for (particle p : c.swarm) {
+            if (p.type == 1) { // 1 is the eating type of particle
+                for (int i = food.size()-1; i >= 0; i--) {
+                    particle f = food.get(i);
+                    vector.setZero();
+                    vector = f.body.getPosition().sub(p.body.getPosition()); // Calculate vector between food and particle
+                    float dis = vector.length();
+                    if (dis < foodRange) {
+                        c.energy += foodEnergy; // Gain energy for eating food
+                        food.remove(i);
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }
 
 void keyPressed(){
