@@ -121,14 +121,11 @@ class cell{  // or colony of cells
   // This mutates all values a 'little' bit. Mutating a few values by a larger amount could work better
   void mutateCell(){
     // Mutate the DNA string by changing a few letters and changing the number of particles
-    if(random(100) < 10){
-      DNA += (char)(65+(int)random(5));
-    }
     
     for(int i = 0; i < numParticles; i++){
-      if(random(100) < 10){
+      if(random(100) < 25){
         DNA = DNA.substring(0,i) + (char)(65+(int)random(5)) + DNA.substring(i+1);
-        println("Mutated DNA: " + DNA);
+        // println("Mutated DNA: " + DNA);
       }
     }
 

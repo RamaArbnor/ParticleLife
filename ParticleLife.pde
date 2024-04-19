@@ -183,9 +183,12 @@ void keyPressed(){
 
   //print dna of a random cell
   if(key == 'p'){
-    cell c;
-    c = cells.get(0);
-    c.printDNA();
+    // cell c;
+    // c = cells.get(0);
+    // c.printDNA();
+    for(int i = 0; i < cells.size(); i++){
+      println("DNA " + i + " " + cells.get(i).DNA);
+    }
   }
 
   //save a screenshot
