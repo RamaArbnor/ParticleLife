@@ -159,25 +159,22 @@ void applyFoodForces(cell c) {
   }
 
   // display the particles
-void display() {
-    Vec2 pos = body.getPosition(); // Get the position of the Box2D body
-    fill(type * colorStep, 100, 100);
-    
-    float px = box2d.scalarWorldToPixels(pos.x); // Convert X coordinate from world to pixels
-    float py = box2d.scalarWorldToPixels(pos.y); // Convert Y coordinate from world to pixels
-    
-    if (!center) {
-        circle(px, py, 8); // Draw the particle
-    } else {
-        fill(120, 100, 100);
-        triangle(px, py, px + 5, py + 10, px - 5, py + 10); // Draw the particle with center flag
-    }
-    
-    if (selected && showSelected) {
-        noFill();
-        stroke(0, 255, 0);
-        circle(px, py, 12); // Draw the selection circle
-    }
-}
+  void display() {
+      Vec2 pos = body.getPosition();
+      fill(type * colorStep, 100, 100);
+      if (!center) {
+          circle(box2d.scalarWorldToPixels(pos.x), box2d.scalarWorldToPixels(pos.y), 8); // Convert Box2D position to pixels
+      } else {
+          fill(120, 100, 100);
+          triangle(box2d.scalarWorldToPixels(pos.x), box2d.scalarWorldToPixels(pos.y), 
+                  box2d.scalarWorldToPixels(pos.x) + 5, box2d.scalarWorldToPixels(pos.y) + 10, 
+                  box2d.scalarWorldToPixels(pos.x) - 5, box2d.scalarWorldToPixels(pos.y) + 10); // Convert Box2D position to pixels
+      }
+      if (selected && showSelected) {
+          noFill();
+          stroke(0, 255, 0);
+          circle(box2d.scalarWorldToPixels(pos.x), box2d.scalarWorldToPixels(pos.y), 12); // Convert Box2D position to pixels
+      }
+  }
 
 }
